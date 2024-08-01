@@ -1,13 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from openai import OpenAI
 from llms.database.dbConnection import get_mongo_database
+from llms.services.function_translate_service import generate_function_in_language
 
 db = get_mongo_database()
 base_collection = db["classEvalPython"]
 
-client = OpenAI(
-    api_key="sk-proj-AG6ODNGho1SBTgI6hkDtT3BlbkFJmFJJKKJLW08Z5sVt1kn6",
-)
 
 high_level_languages = [
     "Python",
@@ -19,31 +17,17 @@ high_level_languages = [
 ]
 
 
-def use_model(data, language):
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": "Can you take this data: " + data + " and make his equivalent to this " + language + " saying nothing in the message, dont use markdown just the response, if not possible give an empty string",
-            }
-        ],
-        model="gpt-3.5-turbo",
-    )
-    response = chat_completion.choices[0].message.content
-    return response
-
-
 def process_method(language, method):
     collection = db['methodEval' + language]
 
-    method_description = use_model(method['method_description'], language)
-    test_code = use_model(method['test_code'], language)
-    solution_code = use_model(method['solution_code'], language)
+    method_description = generate_function_in_language(method['method_description'], language)
+    test_code = generate_function_in_language(method['test_code'], language)
+    solution_code = generate_function_in_language(method['solution_code'], language)
 
     dependencies = method['dependencies']
-    lib_dependencies = [use_model(dep, language) for dep in dependencies['lib_dependencies']]
-    field_dependencies = [use_model(dep, language) for dep in dependencies['field_dependencies']]
-    method_dependencies = [use_model(dep, language) for dep in dependencies['method_dependencies']]
+    lib_dependencies = [generate_function_in_language(dep, language) for dep in dependencies['lib_dependencies']]
+    field_dependencies = [generate_function_in_language(dep, language) for dep in dependencies['field_dependencies']]
+    method_dependencies = [generate_function_in_language(dep, language) for dep in dependencies['method_dependencies']]
 
     data = {
         'method_name': method['method_name'],

@@ -1,15 +1,17 @@
 from flask import Blueprint, jsonify, request
 
+from service.code_translate_service import translate_function
+
 controller_bp = Blueprint('controller', __name__)
 
 
 @controller_bp.route('/translate', methods=['POST'])
 def translate():
-    inputLanguage = request.args.get('inputLanguage')
-    outputLanguage = request.args.get('outputLanguage')
+    input_language = request.args.get('inputLanguage')
+    output_language = request.args.get('outputLanguage')
 
-    if inputLanguage:
-        message = f"Hello, World in {inputLanguage}!"
-    else:
-        message = "Hello, World!"
-    return jsonify({"message": message})
+    input_text = request.get_json().get('inputText')
+
+    result = translate_function(input_text, input_language, output_language)
+
+    return jsonify({"result": result})
